@@ -39,3 +39,4 @@ export const NoteList: React.FC<NoteListProps> = ({ notes }) => {
     </ul>
   );
 };
+export default NoteList;
