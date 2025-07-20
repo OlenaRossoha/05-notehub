@@ -1,20 +1,16 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import type { NoteTag } from "../../types/note";
-import css from "./NoteForm.module.css";
-import type { CreateNoteParams } from "../../services/noteService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-/*interface NoteFormProps {
-  onSubmit: (values: { title: string; content: string; tag: NoteTag }) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}*/
+import type { NoteTag } from "../../types/note";
+import { createNote } from "../../services/noteService";
+
+import css from "./NoteForm.module.css";
 
 interface NoteFormProps {
   onCancel: () => void;
-  onSubmit: (data: CreateNoteParams) => void;
-  isLoading: boolean;
+  isLoading: boolean; // Добавлен пропс isLoading
 }
 
 interface FormValues {
@@ -34,19 +30,29 @@ const validationSchema = Yup.object().shape({
     .required("Required"),
 });
 
-const NoteForm: React.FC<NoteFormProps> = ({
-  onSubmit,
-  onCancel,
-  isLoading,
-}) => {
-  const initialValues: FormValues = { title: "", content: "", tag: "Todo" };
+const NoteForm: React.FC<NoteFormProps> = ({ onCancel, isLoading }) => {
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onCancel(); // Закриваємо модалку
+    },
+  });
+
+  const initialValues: FormValues = {
+    title: "",
+    content: "",
+    tag: "Todo",
+  };
 
   return (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={(values, actions) => {
-        onSubmit(values);
+        mutate(values);
         actions.setSubmitting(false);
       }}
     >

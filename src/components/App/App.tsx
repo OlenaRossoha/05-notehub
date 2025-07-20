@@ -5,13 +5,12 @@ import { useDebounce } from "use-debounce";
 import {
   fetchNotes,
   createNote,
-  deleteNote,
-  type CreateNoteParams,
   type FetchNotesResponse,
 } from "../../services/noteService";
+
 import SearchBox from "../SearchBox/SearchBox";
 import Pagination from "../Pagination/Pagination";
-import NoteList from "../NoteList/NoteList";
+import { NoteList } from "../NoteList/NoteList";
 import Modal from "../Modal/Modal";
 import NoteForm from "../NoteForm/NoteForm";
 
@@ -31,6 +30,7 @@ const App: React.FC = () => {
     queryKey: ["notes", page, debouncedSearch],
     queryFn: () =>
       fetchNotes({ page, perPage: PER_PAGE, search: debouncedSearch }),
+    placeholderData: (prev) => prev,
   });
 
   const createMutation = useMutation({
@@ -40,21 +40,6 @@ const App: React.FC = () => {
       setIsModalOpen(false);
     },
   });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
-
-  const handleCreate = (noteData: CreateNoteParams) => {
-    createMutation.mutate(noteData);
-  };
 
   const totalPages = data?.totalPages ?? 0;
   const notes = data?.data ?? [];
@@ -79,16 +64,15 @@ const App: React.FC = () => {
       {error && <p>Error loading notes.</p>}
 
       {notes.length > 0 ? (
-        <NoteList notes={notes} onDelete={handleDelete} />
+        <NoteList notes={notes} />
       ) : (
-        <p>No notes found.</p>
+        !isLoading && <p>No notes found.</p>
       )}
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
           <NoteForm
             onCancel={() => setIsModalOpen(false)}
-            onSubmit={handleCreate}
             isLoading={createMutation.isPending}
           />
         </Modal>

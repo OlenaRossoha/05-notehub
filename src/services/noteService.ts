@@ -13,12 +13,14 @@ const axiosInstance = axios.create({
   },
 });
 
+// Тип параметрів для запиту нотаток
 export interface FetchNotesParams {
   page: number;
   perPage: number;
   search?: string;
 }
 
+// Тип відповіді для запиту нотаток
 export interface FetchNotesResponse {
   data: Note[];
   total: number;
@@ -27,6 +29,7 @@ export interface FetchNotesResponse {
   totalPages: number;
 }
 
+// Отримання списку нотаток з урахуванням пошуку і пагінації
 export async function fetchNotes({
   page,
   perPage,
@@ -37,8 +40,7 @@ export async function fetchNotes({
     perPage,
   };
 
-  // ✅ Добавляем параметр только если search не пустой
-  if (search && search.trim() !== "") {
+  if (search?.trim()) {
     queryParams.search = search.trim();
   }
 
@@ -48,15 +50,18 @@ export async function fetchNotes({
       params: queryParams,
     }
   );
+
   return response.data;
 }
 
+// Тип параметрів для створення нотатки
 export interface CreateNoteParams {
   title: string;
   content?: string;
-  tag: NoteTag; // строго типизирован
+  tag: NoteTag;
 }
 
+// Створення нової нотатки
 export async function createNote(note: CreateNoteParams): Promise<Note> {
   const response: AxiosResponse<Note> = await axiosInstance.post(
     "/notes",
@@ -65,8 +70,10 @@ export async function createNote(note: CreateNoteParams): Promise<Note> {
   return response.data;
 }
 
-export async function deleteNote(id: string): Promise<{ message: string }> {
-  const response: AxiosResponse<{ message: string }> =
-    await axiosInstance.delete(`/notes/${id}`);
+// Видалення нотатки. API повертає саму видалену нотатку.
+export async function deleteNote(id: number): Promise<Note> {
+  const response: AxiosResponse<Note> = await axiosInstance.delete(
+    `/notes/${id}`
+  );
   return response.data;
 }
