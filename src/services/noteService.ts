@@ -22,7 +22,7 @@ export interface FetchNotesParams {
 
 // Тип відповіді для запиту нотаток
 export interface FetchNotesResponse {
-  data: Note[];
+  notes: Note[];
   total: number;
   page: number;
   perPage: number;

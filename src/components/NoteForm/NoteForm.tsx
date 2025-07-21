@@ -10,7 +10,7 @@ import css from "./NoteForm.module.css";
 
 interface NoteFormProps {
   onCancel: () => void;
-  isLoading: boolean; // Добавлен пропс isLoading
+  /*isLoading: boolean;*/
 }
 
 interface FormValues {
@@ -30,10 +30,10 @@ const validationSchema = Yup.object().shape({
     .required("Required"),
 });
 
-const NoteForm: React.FC<NoteFormProps> = ({ onCancel, isLoading }) => {
+const NoteForm: React.FC<NoteFormProps> = ({ onCancel }) => {
   const queryClient = useQueryClient();
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: createNote,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -52,11 +52,14 @@ const NoteForm: React.FC<NoteFormProps> = ({ onCancel, isLoading }) => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={(values, actions) => {
-        mutate(values);
-        actions.setSubmitting(false);
+        mutate(values, {
+          onSettled: () => {
+            actions.setSubmitting(false);
+          },
+        });
       }}
     >
-      {({ isValid, dirty }) => (
+      {({ isValid, dirty, isSubmitting }) => (
         <Form className={css.form} noValidate>
           <div className={css.formGroup}>
             <label htmlFor="title">Title</label>
@@ -97,15 +100,16 @@ const NoteForm: React.FC<NoteFormProps> = ({ onCancel, isLoading }) => {
               type="button"
               className={css.cancelButton}
               onClick={onCancel}
+              disabled={isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
               className={css.submitButton}
-              disabled={!dirty || !isValid || isLoading}
+              disabled={!dirty || !isValid || isSubmitting || isPending}
             >
-              {isLoading ? "Creating..." : "Create note"}
+              {isPending ? "Creating..." : "Create note"}
             </button>
           </div>
         </Form>

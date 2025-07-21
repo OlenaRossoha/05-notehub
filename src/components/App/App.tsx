@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 
 import {
   fetchNotes,
-  createNote,
   type FetchNotesResponse,
 } from "../../services/noteService";
 
@@ -24,7 +23,10 @@ const App: React.FC = () => {
   const [debouncedSearch] = useDebounce(search, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const queryClient = useQueryClient();
+  const handleSearchChange = (newSearch: string) => {
+    setSearch(newSearch);
+    setPage(1);
+  };
 
   const { data, isLoading, error } = useQuery<FetchNotesResponse, Error>({
     queryKey: ["notes", page, debouncedSearch],
@@ -33,21 +35,13 @@ const App: React.FC = () => {
     placeholderData: (prev) => prev,
   });
 
-  const createMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-      setIsModalOpen(false);
-    },
-  });
-
   const totalPages = data?.totalPages ?? 0;
-  const notes = data?.data ?? [];
+  const notes = data?.notes ?? [];
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox value={search} onChange={setSearch} />
+        <SearchBox value={search} onChange={handleSearchChange} />
         {totalPages > 1 && (
           <Pagination
             pageCount={totalPages}
@@ -71,10 +65,7 @@ const App: React.FC = () => {
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm
-            onCancel={() => setIsModalOpen(false)}
-            isLoading={createMutation.isPending}
-          />
+          <NoteForm onCancel={() => setIsModalOpen(false)} />
         </Modal>
       )}
     </div>
